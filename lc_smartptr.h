@@ -90,12 +90,12 @@ template <typename T>
 class LC_SmartPtr
 {
 public:
-   LC_SmartPtr() : pData(0), reference(0) {
+   LC_SmartPtr() : pData(0), reference(0), m_isDetached(false) {
       reference = new LC_RefCounter();
       reference->retain();
    }
 
-   LC_SmartPtr(T* pValue) : pData(pValue), reference(0) {
+   LC_SmartPtr(T* pValue) : pData(pValue), reference(0), m_isDetached(false) {
       reference = new LC_RefCounter();
       reference->retain();
 #ifdef ENABLE_DEBUG_DYNAMIC
@@ -103,12 +103,14 @@ public:
 #endif
    }
 
-   LC_SmartPtr(const LC_SmartPtr<T>& sp) : pData(sp.pData), reference(sp.reference) {
+   LC_SmartPtr(const LC_SmartPtr<T>& sp) : pData(sp.pData), reference(sp.reference), m_isDetached(false) {
       // Copy constructor.
       reference->retain();
    }
 
    ~LC_SmartPtr() {
+      if (m_isDetached)
+         return;
       if (reference->release())
          return;
 
@@ -181,9 +183,18 @@ public:
       return pData;
    }
 
+   void detach() {
+      m_isDetached = true;
+   }
+
+   void attach() {
+      m_isDetached = false;
+   }
+
 private:
    T* pData;
    LC_RefCounter* reference;
+   bool m_isDetached;
 };
 
 #endif // LC_SMARTPTR_H
